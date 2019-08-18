@@ -121,16 +121,17 @@ function main() {
     ALLOW_UNRELATED_HISTORIES="--allow-unrelated-histories"
   fi
 
-  git merge -s ours --no-commit ${ALLOW_UNRELATED_HISTORIES} "${sub}/${branch}"
-
-  # Merge all tags
+  # First merge all tags
   # Note that $(git tag --list) will also give us already existing tags from the
   # parent repo itself. Merging them is a harmless no-op, however.
   for submodule_tag in $(git tag --list)
   do
-    git merge ${ALLOW_UNRELATED_HISTORIES} "${submodule_tag}"
-    git commit -m "Merge submodule tag ${submodule_tag} for ${sub}/${branch}"
+    git merge -s ours -m "Merge submodule tag ${submodule_tag} for ${sub}/${branch}" ${ALLOW_UNRELATED_HISTORIES} "${submodule_tag}" 
   done
+
+  # Now merge actual files
+  git merge -s ours --no-commit ${ALLOW_UNRELATED_HISTORIES} "${sub}/${branch}"
+
   rm -rf tmpdir
 
   # Add submodule content
