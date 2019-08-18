@@ -129,6 +129,7 @@ function main() {
   for submodule_tag in $(git tag --list)
   do
     git merge ${ALLOW_UNRELATED_HISTORIES} "${submodule_tag}"
+    git commit -m "Merge submodule tag ${submodule_tag} for ${sub}/${branch}"
   done
   rm -rf tmpdir
 
