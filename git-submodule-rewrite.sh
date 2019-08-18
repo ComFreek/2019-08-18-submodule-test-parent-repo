@@ -100,6 +100,8 @@ function main() {
   # Rewrite submodule history
   local tmpdir="$(mktemp -d -t submodule-rewrite-XXXXXX)"
   git clone -b "${branch}" "${url}" "${tmpdir}"
+  # Be sure to get all tags as well as we will mege them later on
+  git fetch --tags
   pushd "${tmpdir}"
   local tab="$(printf '\t')"
   local filter="git ls-files -s | sed \"s:${tab}:${tab}${path}/:\" | GIT_INDEX_FILE=\${GIT_INDEX_FILE}.new git update-index --index-info && mv \${GIT_INDEX_FILE}.new \${GIT_INDEX_FILE} || true"
@@ -108,7 +110,7 @@ function main() {
 
   # Merge in rewritten submodule history
   git remote add "${sub}" "${tmpdir}"
-  git fetch "${sub}"
+  git fetch --tags "${sub}"
 
   if git_version_lte 2.8.4
   then
@@ -120,6 +122,14 @@ function main() {
   fi
 
   git merge -s ours --no-commit ${ALLOW_UNRELATED_HISTORIES} "${sub}/${branch}"
+
+  # Merge all tags
+  # Note that $(git tag --list) will also give us already existing tags from the
+  # parent repo itself. Merging them is a harmless no-op, however.
+  for submodule_tag in $(git tag --list)
+  do
+    git merge ${ALLOW_UNRELATED_HISTORIES} "${submodule_tag}"
+  done
   rm -rf tmpdir
 
   # Add submodule content
